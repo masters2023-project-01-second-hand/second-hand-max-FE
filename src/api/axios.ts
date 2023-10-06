@@ -8,7 +8,7 @@ export const BASE_URL = import.meta.env.DEV
 
 export const WS_BASE_URL = import.meta.env.DEV
   ? `ws://3.39.67.85:8080`
-  : `${import.meta.env.VITE_API_URL}`.replace('http', 'ws:'); // port 번호 붙일지 말지 결정하기
+  : `${import.meta.env.VITE_API_URL}`.replace('http', 'ws'); // port 번호 붙일지 말지 결정하기
 
 export const fetcher = axios.create({
   baseURL: BASE_URL,
