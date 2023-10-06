@@ -8,11 +8,11 @@ import { worker } from './mocks/browser.ts';
 import { designSystem } from './styles/designSystem.ts';
 import './styles/index.css';
 
-if (process.env.NODE_ENV === 'development') {
-  worker.start({
-    onUnhandledRequest: 'bypass',
-  });
-}
+// if (process.env.NODE_ENV === 'development') {
+//   worker.start({
+//     onUnhandledRequest: 'bypass',
+//   });
+// }
 
 const queryClient = new QueryClient({
   defaultOptions: {

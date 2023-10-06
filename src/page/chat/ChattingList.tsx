@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { styled } from 'styled-components';
 import { useGetChatRooms } from '../../api/queries/useChatQuery';
 import { Error } from '../../components/Error';
@@ -6,7 +7,9 @@ import { Loader } from '../../components/Loader';
 import { ChattingItem } from './ChattingItem';
 
 export function ChattingList() {
-  const { data, isLoading, isError } = useGetChatRooms();
+  const location = useLocation();
+  const itemId = location.state?.itemId;
+  const { data, isLoading, isError } = useGetChatRooms(itemId);
 
   return (
     <Container>
@@ -15,7 +18,9 @@ export function ChattingList() {
         {isLoading ? (
           <Loader />
         ) : (
-          data?.map((chat, index) => <ChattingItem key={index} {...chat} />)
+          data?.chatRooms.map((chat, index) => (
+            <ChattingItem key={index} {...chat} />
+          ))
         )}
         {isError && <Error message="채팅방 목록을 가져오지 못 했습니다." />}
       </Body>
@@ -26,10 +31,22 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
+  overflow: hidden;
 `;
 
 const Body = styled.div`
   width: 100%;
   flex: 1;
   margin-top: 56px;
+  box-sizing: border-box;
+  overflow-y: scroll;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.color.neutralBorderStrong};
+    border-radius: 10px;
+  }
 `;

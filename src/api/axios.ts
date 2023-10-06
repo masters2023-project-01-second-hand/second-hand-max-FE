@@ -1,14 +1,14 @@
 import axios from 'axios';
 
-const currentPort = window.location.port;
+const { DEV, VITE_API_URL } = import.meta.env;
 
-export const BASE_URL = import.meta.env.DEV
-  ? `http://localhost:${currentPort}`
-  : import.meta.env.VITE_API_URL;
+const CURRENT_PORT = window.location.port;
+const LOCALHOST = `http://localhost`;
 
-export const WS_BASE_URL = import.meta.env.DEV
-  ? `ws://localhost:8080`
-  : `ws://${import.meta.env.VITE_API_URL}`;
+export const BASE_URL = DEV ? `${LOCALHOST}:${CURRENT_PORT}` : VITE_API_URL;
+export const WS_BASE_URL = DEV
+  ? `${LOCALHOST}:8080`.replace('http', 'ws')
+  : BASE_URL.replace('http', 'ws');
 
 export const fetcher = axios.create({
   baseURL: BASE_URL,

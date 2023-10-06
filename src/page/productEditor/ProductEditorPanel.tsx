@@ -14,7 +14,7 @@ import { useProductEditorStore } from '../../stores/useProductEditorStore';
 import { useScreenConfigStore } from '../../stores/useScreenConfigStore';
 import { CategoryContainer } from './CategoryContainer';
 import { CategorySelectModal } from './CategorySelectModal';
-import { LocationDropdown } from './LocationDropdown';
+import { EditorLocationDropdown } from './EditorLocationDropdown';
 import { PictureContainer } from './PictureContainer';
 import { ProductContent } from './ProductContent';
 export const PICTURE_MAX_LENGTH = 10;
@@ -28,6 +28,12 @@ export type CategoryData = {
 type CategoryItem = {
   id: number;
   name: string;
+};
+
+type UserLocation = {
+  id: number;
+  name: string;
+  isSelected: boolean;
 };
 
 export function ProductEditorPanel() {
@@ -48,12 +54,6 @@ export function ProductEditorPanel() {
   const isEdit = editorMode === 'edit';
   const isError = isEdit && (!productData || !productId);
 
-  const matchLocationId = (productId: number) => {
-    return userLocationData!.locations.map(location => ({
-      ...location,
-      isSelected: location.id === productId,
-    }));
-  };
   const [pictureList, setPictureList] = useState<PictureListType[]>(
     productData ? productData.images : []
   );
@@ -63,18 +63,9 @@ export function ProductEditorPanel() {
   const [rightPosition, setRightPosition] = useState(-screenWidth);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletePictureId, setDeletePictureId] = useState<number[]>([]);
-  const [locationData, setLocationData] = useState(
-    (() => {
-      if (productData?.myLocation) {
-        return matchLocationId(productData.myLocation.id);
-      }
-      return userLocationData!.locations;
-    })()
-  );
-
-  const selectLocation = (productId: number) => {
-    setLocationData(matchLocationId(productId));
-  };
+  const [locationData, setLocationData] = useState<UserLocation[]>([]);
+  const [selectedUserLocation, setSelectedUserLocation] =
+    useState<UserLocation>();
 
   const title = useInput(isEdit ? productData!.title : '');
   const price = useInput(isEdit ? productData!.price : '');
@@ -84,24 +75,21 @@ export function ProductEditorPanel() {
     title.value ?? ''
   );
 
-  const selectedLocationData = locationData?.filter(
-    data => data.isSelected === true
-  )[0];
-
   const isChanged =
     productData?.title !== title.value ||
     productData?.content !== content.value ||
     productData?.price !== price.value ||
     selectedCategoryId !==
       productData?.categories.filter(data => data.isSelected === true)[0].id ||
-    productData?.myLocation.id !== selectedLocationData.id ||
+    selectedUserLocation?.id !==
+      productData?.locations.filter(location => location.isSelected)[0].id ||
     uploadPictureList.length > 0 ||
     deletePictureId.length > 0;
 
   const isEmpty =
     pictureList.length + uploadPictureList.length === 0 ||
     selectedCategoryId === undefined ||
-    selectedLocationData === undefined ||
+    selectedUserLocation === undefined ||
     title.value === '' ||
     content.value === '' ||
     userLocationData === undefined;
@@ -113,7 +101,14 @@ export function ProductEditorPanel() {
   }, [isOpen, screenWidth]);
 
   useEffect(() => {
-    if (!productData) return;
+    if (!productData) {
+      if (!userLocationData) return;
+      setLocationData(userLocationData?.locations);
+      setSelectedUserLocation(
+        userLocationData?.locations.filter(location => location.isSelected)[0]
+      );
+      return;
+    }
 
     const recommendCategory = {
       categories: productData.categories.map(({ id, name }) => ({
@@ -127,7 +122,8 @@ export function ProductEditorPanel() {
 
     setRecommendCategory(recommendCategory);
     setSelectedCategoryId(selectedCategoryId);
-  }, [productData]);
+    setLocationData(productData?.locations);
+  }, [productData, isEdit, userLocationData]);
 
   useEffect(() => {
     if (!recommendCategoryData) return;
@@ -156,6 +152,19 @@ export function ProductEditorPanel() {
       clearTimeout(handler);
     };
   }, [editorMode, title.value, productData, refetch]);
+
+  const selectLocation = (selectedLocationId: number) => {
+    const currentUserLocation = locationData?.filter(
+      location => location.id === selectedLocationId
+    )[0];
+
+    setSelectedUserLocation(currentUserLocation);
+    setLocationData(prev =>
+      prev.map(location => {
+        return { ...location, isSelected: location.id === selectedLocationId };
+      })
+    );
+  };
 
   const addPicture = (event: ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files;
@@ -267,7 +276,7 @@ export function ProductEditorPanel() {
       categoryId: selectedCategoryId,
       price: price.value === '' ? null : convertedPrice,
       content: content.value,
-      myLocationId: selectedLocationData?.id,
+      myLocationId: selectedUserLocation?.id,
     };
 
     formData.append(
@@ -360,7 +369,7 @@ export function ProductEditorPanel() {
           </PriceInputWrapper>
         </Wrapper>
         <ProductContent
-          placeholder={`${selectedLocationData?.name}에 올릴 게시물 내용을 작성해주세요.(판매금지 물품은 게시가 제한될 수 있어요.)`}
+          placeholder={`${selectedUserLocation?.name}에 올릴 게시물 내용을 작성해주세요.(판매금지 물품은 게시가 제한될 수 있어요.)`}
           value={content.value}
           onChange={content.onChange}
         />
@@ -377,8 +386,8 @@ export function ProductEditorPanel() {
         {isError || userLocationData === undefined ? (
           <span>Error : 로케이션 정보를 가져오지 못했습니다.</span>
         ) : (
-          <LocationDropdown
-            myLocation={locationData}
+          <EditorLocationDropdown
+            UserLocationData={locationData}
             selectLocation={selectLocation}
           />
         )}

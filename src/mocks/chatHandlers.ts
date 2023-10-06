@@ -5,12 +5,17 @@ import { ChattingItemType } from '../page/chat/ChattingItem';
 
 export const chatHandlers = [
   rest.get(API_ENDPOINT.CHAT_ROOMS, (_, res, ctx) => {
-    return res(ctx.status(200), ctx.json(chatRooms));
+    return res(ctx.status(200), ctx.json({ chatRooms }));
   }),
+
   rest.get(`${API_ENDPOINT.CHAT_ROOMS}/:id`, (req, res, ctx) => {
     const { id } = req.params;
 
     return res(ctx.status(200), ctx.json(chatRoom[Number(id)]));
+  }),
+
+  rest.post(API_ENDPOINT.CHAT_ROOMS, (_, res, ctx) => {
+    return res(ctx.status(201), ctx.json({ chatRoomId: 1 }));
   }),
 ];
 
@@ -71,6 +76,7 @@ const chatRoom: ChatRoomType[] = [
           '안녕하세요! 한 가지 궁금한 점이 있어서 챗 드려요~~~~~~~~~~~~~~~~~',
       },
     ],
+    nextCursor: 1,
   },
   {
     item: {
@@ -115,7 +121,68 @@ const chatRoom: ChatRoomType[] = [
         isSent: false,
         content: '애눌좀 해주세요',
       },
+      {
+        id: 130,
+        isSent: false,
+        content: '팔렸나요?',
+      },
+      {
+        id: 131,
+        isSent: true,
+        content: '아니요 아직 안 팔렸습니다.',
+      },
+      {
+        id: 132,
+        isSent: true,
+        content: '직거래로 구매 하시나요?',
+      },
+      {
+        id: 133,
+        isSent: false,
+        content: '넵 직거래 하려고 합니다.',
+      },
+      {
+        id: 134,
+        isSent: false,
+        content: '근데 조금 비싼거 같은데',
+      },
+      {
+        id: 135,
+        isSent: false,
+        content: '애눌좀 해주세요',
+      },
+      {
+        id: 136,
+        isSent: false,
+        content: '팔렸나요?',
+      },
+      {
+        id: 137,
+        isSent: true,
+        content: '아니요 아직 안 팔렸습니다.',
+      },
+      {
+        id: 138,
+        isSent: true,
+        content: '직거래로 구매 하시나요?',
+      },
+      {
+        id: 139,
+        isSent: false,
+        content: '넵 직거래 하려고 합니다.',
+      },
+      {
+        id: 140,
+        isSent: false,
+        content: '근데 조금 비싼거 같은데',
+      },
+      {
+        id: 141,
+        isSent: false,
+        content: '애눌좀 해주세요',
+      },
     ],
+    nextCursor: 1,
   },
   {
     item: {
@@ -161,5 +228,6 @@ const chatRoom: ChatRoomType[] = [
         content: '애눌좀 해주세요',
       },
     ],
+    nextCursor: 1,
   },
 ];

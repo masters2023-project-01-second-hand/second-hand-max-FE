@@ -18,10 +18,13 @@ import { Dropdown } from '../components/dropdown/Dropdown';
 import { MenuItem } from '../components/dropdown/MenuItem';
 import { Icon } from '../components/icon/Icon';
 import { Slider } from '../components/itemDetails/Slider';
+import { usePanelStore } from '../stores/usePanelStore';
 import { useProductEditorStore } from '../stores/useProductEditorStore';
 import { useToastStore } from '../stores/useToastStore';
 import { getElapsedSince } from '../utils/getElapsedSince';
 import { priceToString } from '../utils/priceToString';
+import { ChatRoom } from './chat/ChatRoom';
+import { NewChatRoom } from './chat/NewChatRoom';
 
 type DetailsStatus = '판매중' | '예약중' | '판매완료';
 
@@ -41,6 +44,7 @@ export type ItemDetailsData = {
   };
   isFavorite: boolean;
   price: number;
+  chatRoomId?: number;
 };
 
 export function ItemDetails() {
@@ -66,6 +70,7 @@ export function ItemDetails() {
   const from = location?.state?.redirectedFrom.pathname || '/';
   const openEditorPanel = useProductEditorStore(state => state.openPanel);
   const showToast = useToastStore(state => state.showToast);
+  const openChatRoomPanel = usePanelStore(state => state.openPanel);
 
   const {
     data: itemDetailsEditData,
@@ -165,6 +170,39 @@ export function ItemDetails() {
   const deleteItem = () => {
     deleteMutation.mutate(Number(itemId));
     navigate(from);
+  };
+
+  const getChatRooms = () => {
+    if (itemDetailsData.countData.chat === 0) {
+      showToast({
+        mode: 'warning',
+        message: '개설된 채팅방이 없습니다.',
+      });
+      return;
+    }
+
+    navigate('/chat', { state: { itemId: itemId } });
+  };
+
+  const moveToChatRoom = (chatroomId: number) => {
+    openChatRoomPanel(<ChatRoom chatRoomId={chatroomId} />);
+  };
+
+  const createChatRoom = () => {
+    const chatroomData = {
+      item: {
+        id: Number(itemId),
+        title: itemDetailsData.title,
+        price: itemDetailsData.price,
+        status: itemDetailsData.status.find(item => item.isSelected)!.name,
+        thumbnailUrl: itemDetailsData.images[0].url,
+      },
+      chatMember: {
+        nickname: itemDetailsData.seller,
+      },
+    };
+
+    openChatRoomPanel(<NewChatRoom chatroomData={chatroomData} />);
   };
 
   return (
@@ -269,8 +307,21 @@ export function ItemDetails() {
           <Price>{priceToString(itemDetailsData.price)}</Price>
         </FooterLeft>
         <div>
-          <Button size="M" color="accentPrimary" fontColor="accentText">
-            {itemDetailsData.isSeller ? '대화 중인 채팅방' : ' 채팅하기'}
+          <Button
+            size="M"
+            color="accentPrimary"
+            fontColor="accentText"
+            onClick={
+              itemDetailsData.isSeller
+                ? getChatRooms
+                : itemDetailsData.chatRoomId === null
+                ? createChatRoom
+                : () => moveToChatRoom(itemDetailsData.chatRoomId!)
+            }
+          >
+            {itemDetailsData.isSeller
+              ? `대화 중인 채팅방 ${itemDetailsData.countData.chat}`
+              : '채팅하기'}
           </Button>
         </div>
       </Footer>

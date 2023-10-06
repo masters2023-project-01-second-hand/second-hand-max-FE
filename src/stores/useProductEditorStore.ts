@@ -9,7 +9,7 @@ export type ProductData = {
   categories: { id: number; name: string; isSelected: boolean }[];
   price: number | null;
   content: string;
-  myLocation: { id: number; name: string };
+  locations: { id: number; name: string; isSelected: boolean }[];
 };
 
 type OpenPanelParams =

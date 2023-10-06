@@ -47,9 +47,11 @@ export function ChattingItem({
         </NameAndTimestamp>
         <RecentMessage>{recentMessage}</RecentMessage>
       </ChatInfo>
-      <UnreadCount>
-        <UnreadBadge>{unreadCount}</UnreadBadge>
-      </UnreadCount>
+      {unreadCount > 0 && (
+        <UnreadCount>
+          <UnreadBadge>{unreadCount}</UnreadBadge>
+        </UnreadCount>
+      )}
       <ImageWrapper>
         <ProductImage src={item.thumbnailUrl} />
       </ImageWrapper>

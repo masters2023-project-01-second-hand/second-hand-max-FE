@@ -1,19 +1,17 @@
 import { KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
-import { useInView } from 'react-intersection-observer';
 import { styled } from 'styled-components';
-import { useGetChatRoom } from '../../api/queries/useChatQuery';
-import { Error } from '../../components/Error';
+import { createChatRoom } from '../../api/fetchers/chatFetcher';
 import { Header } from '../../components/Header';
-import { Loader } from '../../components/Loader';
 import { Button } from '../../components/button/Button';
 import { Icon } from '../../components/icon/Icon';
 import { useInput } from '../../hooks/useInput';
 import { useStomp } from '../../hooks/useWebSocket';
 import { usePanelStore } from '../../stores/usePanelStore';
 import { priceToString } from '../../utils/priceToString';
+import { MessageType } from './ChatRoom';
 import { Message } from './Message';
 
-export type ChatRoomType = {
+type NewChatRoomDataProps = {
   item: {
     id: number;
     title: string;
@@ -24,25 +22,17 @@ export type ChatRoomType = {
   chatMember: {
     nickname: string;
   };
-  messages: MessageType[];
-  nextCursor: number | null;
 };
 
-export type MessageType = {
-  id: number;
-  isSent: boolean;
-  content: string;
-};
-
-export function ChatRoom({ chatRoomId }: { chatRoomId: number }) {
-  const { closePanel } = usePanelStore();
-  const { data, isError, isLoading, fetchNextPage, hasNextPage } =
-    useGetChatRoom(chatRoomId);
-  const [messages, setMessages] = useState<MessageType[]>();
-  const [isAutoScroll, setIsAutoScroll] = useState(true);
-  const { ref: observingTargetRef, inView } = useInView();
+export function NewChatRoom({
+  chatroomData,
+}: {
+  chatroomData: NewChatRoomDataProps;
+}) {
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [chatroomId, setChatroomId] = useState<number>();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
+  const { closePanel } = usePanelStore();
   const message = useInput('');
 
   const onMessage = useCallback((message: MessageType) => {
@@ -52,45 +42,41 @@ export function ChatRoom({ chatRoomId }: { chatRoomId: number }) {
     ]);
   }, []);
 
-  const { connectWS, closeWS, sendMessage } = useStomp(onMessage);
+  const { connectWS, closeWS, sendMessage, stompClient } = useStomp(onMessage);
 
   useEffect(() => {
-    connectWS(chatRoomId);
-  }, [connectWS, chatRoomId]);
-
-  useEffect(() => {
-    return closeWS;
-  }, [closeWS]);
-
-  useEffect(() => {
-    if (data?.pages[0].messages) {
-      const messageData: MessageType[] = [...data.pages]
-        .reverse()
-        .flatMap(page => page.messages);
-
-      setMessages(messageData);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (isAutoScroll) {
-      scrollToBottom();
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
     }
   }, [messages]);
 
-  useEffect(() => {
-    if (inView && hasNextPage) {
-      fetchNextPage();
-      setIsAutoScroll(false);
-    }
-  }, [inView, hasNextPage, fetchNextPage]);
+  const createWebSocket = async () => {
+    try {
+      // 채팅방 생성 요청
+      const { chatRoomId } = await createChatRoom(chatroomData.item.id);
 
-  const onSend = () => {
-    if (message.value) {
+      await connectWS(chatRoomId);
+
+      if (message.value === undefined) return;
+
       sendMessage(message.value, chatRoomId);
-      setIsAutoScroll(true);
-      message.clearValue();
+      setChatroomId(chatRoomId);
+    } catch (error) {
+      console.error('채팅방 생성 요청 중 오류 발생:', error);
     }
+  };
+
+  const onSend = async () => {
+    if (!message.value) return;
+
+    if (!stompClient) {
+      await createWebSocket();
+      return;
+    }
+
+    if (!chatroomId) return;
+    sendMessage(message.value, chatroomId);
+    message.clearValue();
   };
 
   const onClose = () => {
@@ -98,15 +84,9 @@ export function ChatRoom({ chatRoomId }: { chatRoomId: number }) {
     closeWS();
   };
 
-  const onKeyUpEnter = (event: KeyboardEvent<HTMLInputElement>) => {
+  const onKeydownEnter = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       onSend();
-    }
-  };
-
-  const scrollToBottom = () => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
     }
   };
 
@@ -119,48 +99,42 @@ export function ChatRoom({ chatRoomId }: { chatRoomId: number }) {
             <span>뒤로</span>
           </Button>
         }
-        title={data?.pages[0].chatMember.nickname}
+        title={chatroomData?.chatMember.nickname}
       />
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <Body>
-          <ProductInfoBanner>
-            <ProductImage src={data?.pages[0].item.thumbnailUrl} />
-            <div>
-              <Title>{data?.pages[0].item.title}</Title>
-              <Price>{priceToString(data?.pages[0].item.price)}</Price>
-            </div>
-          </ProductInfoBanner>
-          <Messages ref={messagesEndRef}>
-            <ObservingTarget ref={observingTargetRef} />
-            {messages?.map((message, index) => (
-              <Message
-                key={index}
-                content={message.content}
-                isSent={message.isSent}
-              />
-            ))}
-          </Messages>
-          <ChatBar>
-            <StyledInput
-              placeholder="내용을 입력하세요"
-              onKeyUp={onKeyUpEnter}
-              onChange={message.onChange}
-              value={message.value}
+      <Body>
+        <ProductInfoBanner>
+          <ProductImage src={chatroomData?.item.thumbnailUrl} />
+          <div>
+            <Title>{chatroomData?.item.title}</Title>
+            <Price>{priceToString(chatroomData?.item.price)}</Price>
+          </div>
+        </ProductInfoBanner>
+        <Messages ref={messagesEndRef}>
+          {messages?.map((message, index) => (
+            <Message
+              key={index}
+              content={message.content}
+              isSent={message.isSent}
             />
-            <Button
-              size="M"
-              styledType="circle"
-              color="accentPrimary"
-              onClick={onSend}
-            >
-              <Icon size={16} name="send" color="accentText" />
-            </Button>
-          </ChatBar>
-        </Body>
-      )}
-      {isError && <Error message="채팅방을 불러오지 못했습니다." />}
+          ))}
+        </Messages>
+        <ChatBar>
+          <StyledInput
+            placeholder="내용을 입력하세요"
+            onKeyUp={onKeydownEnter}
+            onChange={message.onChange}
+            value={message.value}
+          />
+          <Button
+            size="M"
+            styledType="circle"
+            color="accentPrimary"
+            onClick={onSend}
+          >
+            <Icon size={16} name="send" color="accentText" />
+          </Button>
+        </ChatBar>
+      </Body>
     </Container>
   );
 }
@@ -215,13 +189,11 @@ const Price = styled.div`
 const Messages = styled.div`
   width: 100%;
   display: flex;
-  align-items: center;
   flex-direction: column;
   gap: 8px;
   flex: 1;
   padding: 12px 16px;
   overflow-y: scroll;
-  position: relative;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -257,12 +229,4 @@ const StyledInput = styled.input`
   background: ${({ theme }) => theme.color.neutralBackground};
   color: ${({ theme }) => theme.color.neutralTextWeak};
   font: ${({ theme }) => theme.font.availableDefault16};
-`;
-
-const ObservingTarget = styled.div`
-  width: 100%;
-  min-height: 40px;
-  background-color: transparent;
-  position: absolute;
-  z-index: -1;
 `;
