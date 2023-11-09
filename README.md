@@ -1,27 +1,36 @@
-# React + TypeScript + Vite
+# 그룹 프로젝트 - 코끼리 마켓 
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> - 그룹 프로젝트 - 중고거래 (Second Hand Market) 
+> - 2023 코드스쿼드 마스터즈 Max에서 진행한 그룹 프로젝트
+> - 미션 기간: 2023-08-21 (화) ~ 2023-10-06 (금) - 6주 + 1주 (방학)
 
-Currently, two official plugins are available:
+## 동작 데모
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+https://github.com/max2023-4th-project-01/BE-B-Cokkiri-Market/assets/97204689/6c00846a-44f1-4270-b420-989dd912124e
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+1. **회원가입**
+2. **로그인**
+3. **홈 화면**
+- 카테고리 필터
+- 동네 추가
+- 동네 삭제
+- 동네 변경
+- 게시글 등록, 사진 2장 이상
+- 게시글 상세에서 상태 드롭다운 열어서 바꿔보기
+- 게시글 수정 + 제목, 사진, 카테고리, 내용, 지역 변경
+4. **판매내역**
+- 상태필터 적용
+- 상태 변경
+5. **관심상품**
+- 남의 상품 좋아요, 좋아요 취소
+- 좋아요 5개 누른 다음에 관심 상품 목록으로 이동
+- 좋아요 카테고리 별로 필터
+- 좋아요 목록 중 "내 어린 시절 우연히~" 좋아요 취소 하기
+6. **채팅**
+- "코끼리 테스트" 상세 들어가서 채팅 하기
+- 내 판매내역 들어가서 대화중이니 채팅방 버튼 누르기
+- 게시글 삭제하기
+7. **내 계정**
+- 프로필 이미지 변경하기
+- 로그아웃 하기
+- 로그아웃 된 채로 판매내역, 관심상품, 채팅 클릭하기
